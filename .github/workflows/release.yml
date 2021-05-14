@@ -27,3 +27,4 @@ jobs:
         with:
           files: 'build/libs/*;LICENSE'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: "v0.1.6"
