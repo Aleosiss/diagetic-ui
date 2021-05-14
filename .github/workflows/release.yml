@@ -20,7 +20,9 @@ jobs:
           java-version: '16'
       - name: Build with Gradle
         id: build
-        run: ./gradlew build -Pmod_version=${GITHUB_REF}
+        run: |
+          printenv
+          ./gradlew build -Pmod_version="${GITHUB_REF}"
       - name: upload artifacts to github
         id: upload
         uses: AButler/upload-release-assets@v2.0
