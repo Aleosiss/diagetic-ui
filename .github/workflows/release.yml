@@ -21,12 +21,6 @@ jobs:
       - name: Build with Gradle
         id: build
         run: ./gradlew build -Pmod_version=${GITHUB_REF}
-      - name: create release
-        id: release
-        uses: marvinpinto/action-automatic-releases@latest
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          prerelease: false
       - name: upload artifacts to github
         id: upload
         uses: AButler/upload-release-assets@v2.0
