@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 public class MakeInventoryRequestHandler implements ClientPlayNetworking.PlayChannelHandler {
     private static final Logger LOGGER = LogManager.getLogger();
 
-    public static final ClientPlayNetworking.PlayChannelHandler CLIENT_SEND_INVENTORY_REQUEST = new MakeInventoryRequestHandler(DiageticUIClient.SHULKER_BOX_RENDERER);
+    public static final ClientPlayNetworking.PlayChannelHandler CLIENT_SEND_INVENTORY_REQUEST = new MakeInventoryRequestHandler(DiageticUIClient.HUD_OVERLAY_RENDERER);
 
     private final HudOverlayRenderer renderer;
 
