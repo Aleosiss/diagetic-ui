@@ -1,0 +1,31 @@
+name: Release
+
+on:
+  create:
+    tags:
+      - "v*"
+
+jobs:
+  tagged-release:
+    name: tagged-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: set up java
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '16'
+      - name: Build with Gradle
+        run: ./gradlew build -Pmod_version=${GITHUB_REF}
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifacts
+          path: build/libs
+      - uses: marvinpinto/action-automatic-releases@latest
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            build/libs/*.jar

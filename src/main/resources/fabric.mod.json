@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "diageticui",
+  "version": "${version}",
+  "name": "DiageticUI",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/diageticui/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.aleosiss.diageticui.client.DiageticUIClient"
+    ],
+    "main": [
+      "com.aleosiss.diageticui.DiageticUI"
+    ]
+  },
+  "mixins": [
+    "diageticui.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.11.3",
+    "fabric": "*",
+    "minecraft": "1.16.5"
+  }
+}
