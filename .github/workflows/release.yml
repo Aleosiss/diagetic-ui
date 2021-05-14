@@ -27,4 +27,3 @@ jobs:
         with:
           files: 'build/libs/*;LICENSE'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "${{ steps.release.outputs.automatic_releases_tag }}"
