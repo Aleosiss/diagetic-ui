@@ -11,8 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set Tag Variable
-        run: |
-          - echo "tag=$(echo $GITHUB_REF | cut -d'/' -f 3)" >> $GITHUB_ENV
+        run: echo "tag=$(echo $GITHUB_REF | cut -d'/' -f 3)" >> $GITHUB_ENV
       - uses: actions/checkout@v2
       - name: set up java
         uses: actions/setup-java@v2
