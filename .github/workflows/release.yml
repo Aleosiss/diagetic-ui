@@ -23,7 +23,7 @@ jobs:
         run: |
           printenv
           ./gradlew build -Pmod_version="${GITHUB_REF}"
-          ls -al build/libs
+          ls -al build/libs/diageticui-refs
       - name: upload artifacts to github
         id: upload
         uses: AButler/upload-release-assets@v2.0
