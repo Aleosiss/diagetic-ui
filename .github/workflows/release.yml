@@ -21,8 +21,9 @@ jobs:
           java-version: '16'
       - name: Build with Gradle
         run: |
-        ./gradlew build -Pmod_version=${{ env.tag }}
-      - uses: marvinpinto/action-automatic-releases@latest
+        ./gradlew build -Pmod_version="${{ env.tag }}"
+      - name: create release
+        uses: marvinpinto/action-automatic-releases@latest
         with:
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
           prerelease: false
