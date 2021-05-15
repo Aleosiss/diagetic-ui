@@ -23,6 +23,7 @@ jobs:
         run: |
           printenv
           ./gradlew build -Pmod_version="${GITHUB_REF}"
+          ls -al
       - name: upload artifacts to github
         id: upload
         uses: AButler/upload-release-assets@v2.0
