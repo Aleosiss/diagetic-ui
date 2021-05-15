@@ -10,24 +10,21 @@ jobs:
     name: tagged-release
     runs-on: ubuntu-latest
     steps:
+      - name: Set Tag Variable
+        run: |
+          - echo "tag=$(echo $GITHUB_REF | cut -d'/' -f 3)" >> $GITHUB_ENV
       - uses: actions/checkout@v2
-        id: checkout
       - name: set up java
-        id: setup
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
           java-version: '16'
       - name: Build with Gradle
-        id: build
         run: |
-          printenv
-          ./gradlew build -Pmod_version="${GITHUB_REF}"
-          ls -al build/libs/diageticui-refs
-      - name: upload artifacts to github
-        id: upload
-        uses: AButler/upload-release-assets@v2.0
+        ./gradlew build -Pmod_version=${{ env.tag }}
+      - uses: marvinpinto/action-automatic-releases@latest
         with:
-          files: 'build/libs/*;LICENSE'
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          release-tag: "v0.1.6"
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            build/libs/*
