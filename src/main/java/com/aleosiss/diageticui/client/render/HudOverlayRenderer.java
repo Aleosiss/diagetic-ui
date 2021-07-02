@@ -188,7 +188,7 @@ public class HudOverlayRenderer {
                                               LockableContainerBlockEntity blockEntity,
                                               int x, int y, int z)
     {
-        final double zOffset = z + 100.0;
+        final int zOffset = z + 100;
         int invSize = inventory.size();
         int xOffset = 7;
         int yOffset = 7;
@@ -202,12 +202,7 @@ public class HudOverlayRenderer {
 
         setTexture(mc, color);
 
-        Tessellator tessellator = Tessellator.getInstance();
-        BufferBuilder builder = tessellator.getBuffer();
-        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
-
-        DrawHelpers.manipulateTexture(x, y, builder, zOffset, invSize, rowSize, rowWidth, xOffset, yOffset);
-        tessellator.draw();
+        DrawHelpers.manipulateTexture(new MatrixStack(), x, y, zOffset, invSize, rowSize, rowWidth, xOffset, yOffset);
 
     }
 
