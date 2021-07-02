@@ -15,7 +15,7 @@ import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -49,7 +49,7 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
         server.execute(() -> {
             BlockState blockState = player.world.getBlockState(blockPos);
             Block block = blockState.getBlock();
-            CompoundTag inventoryTagData = new CompoundTag();
+            NbtCompound inventoryTagData = new NbtCompound();
             BlockEntity blockEntity = player.world.getBlockEntity(blockPos);
             int invMaxSize;
             ContainerType containerType;
@@ -69,14 +69,14 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
                     containerType = ContainerType.SINGLE_CHEST;
                 }
 
-                inventoryTagData = Inventories.toTag(inventoryTagData, items);
+                inventoryTagData = Inventories.writeNbt(inventoryTagData, items);
             }
             else if(blockEntity instanceof LockableContainerBlockEntity) {
                 LockableContainerBlockEntity lbe = (LockableContainerBlockEntity) blockEntity;
                 containerType = ContainerType.from(lbe);
 
                 invMaxSize = lbe.size();
-                inventoryTagData = lbe.toTag(inventoryTagData);
+                inventoryTagData = lbe.writeNbt(inventoryTagData);
             } else {
                 return;
             }

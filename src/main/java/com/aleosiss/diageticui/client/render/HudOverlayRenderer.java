@@ -1,5 +1,6 @@
 package com.aleosiss.diageticui.client.render;
 
+import com.aleosiss.diageticui.client.render.util.DrawHelpers;
 import com.aleosiss.diageticui.data.ContainerType;
 import com.aleosiss.diageticui.network.NetworkConstants;
 import com.aleosiss.diageticui.network.NetworkService;
@@ -15,17 +16,15 @@ import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.DiffuseLighting;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
@@ -34,8 +33,6 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
-import org.lwjgl.opengl.GL11;
 
 import static net.minecraft.block.ShulkerBoxBlock.getColor;
 
@@ -103,12 +100,13 @@ public class HudOverlayRenderer {
         }
 
         DefaultedList<ItemStack> inventory = DefaultedList.ofSize(cachedRequestData.invMaxSize, ItemStack.EMPTY);
-        Inventories.fromTag(cachedRequestData.inventoryData, inventory);
+        Inventories.readNbt(cachedRequestData.inventoryData, inventory);
         ContainerType containerType = cachedRequestData.containerType;
 
         ms.push();
-        Screen hudOverlayScreen = new BaseContainerScreen(null) {
-        };
+        Screen hudOverlayScreen = new BaseContainerScreen(new TranslatableText("diageticui.container.screen")) {};
+
+
         hudOverlayScreen.init(mc,
                 mc.getWindow().getScaledWidth(),
                 mc.getWindow().getScaledHeight());
@@ -123,7 +121,7 @@ public class HudOverlayRenderer {
         }
 
 
-        drawInventoryGUIImage(mc, containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        drawInventoryBackgroundImage(mc, containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
         drawInventoryItems(mc, containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
 
         ms.pop();
@@ -185,7 +183,18 @@ public class HudOverlayRenderer {
         }
     }
 
-    private void drawInventoryGUIImage(MinecraftClient mc, ContainerType type, int invItemsPerRow, DefaultedList<ItemStack> inventory, LockableContainerBlockEntity blockEntity, int posX, int posY, int zOff) {
+    private void drawInventoryBackgroundImage(MinecraftClient mc, ContainerType type,
+                                              int invItemsPerRow, DefaultedList<ItemStack> inventory,
+                                              LockableContainerBlockEntity blockEntity,
+                                              int x, int y, int z)
+    {
+        final double zOffset = z + 100.0;
+        int invSize = inventory.size();
+        int xOffset = 7;
+        int yOffset = 7;
+        int rowSize = invItemsPerRow;
+        int rowWidth = rowSize * 18;
+
         float[] color = DEFAULT_COLOR;
         if(ContainerType.SHULKER_BOX.equals(type)) {
             color = getShulkerBoxColor(blockEntity);
@@ -193,26 +202,13 @@ public class HudOverlayRenderer {
 
         setTexture(mc, color);
 
-        RenderSystem.enableAlphaTest();
-        DiffuseLighting.disable();
-
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder builder = tessellator.getBuffer();
-        builder.begin(GL11.GL_QUADS, VertexFormats.POSITION_TEXTURE);
+        builder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE);
 
-        final double zOffset = zOff + 100.0;
-        int invSize = inventory.size();
-        int rowSize = invItemsPerRow;
-        int rowWidth = rowSize * 18;
-
-        int xOffset = 7;
-        int yOffset = 7;
-
-        manipulateTexture(posX, posY, builder, zOffset, invSize, rowSize, rowWidth, xOffset, yOffset);
-
+        DrawHelpers.manipulateTexture(x, y, builder, zOffset, invSize, rowSize, rowWidth, xOffset, yOffset);
         tessellator.draw();
-        RenderSystem.disableAlphaTest();
-        DiffuseLighting.enable();
+
     }
 
     private float[] getShulkerBoxColor(LockableContainerBlockEntity blockEntity) {
@@ -232,54 +228,9 @@ public class HudOverlayRenderer {
         return color;
     }
 
-    // TODO: understand how this works
-    private void manipulateTexture(int posX, int posY, BufferBuilder builder, double zOffset, int invSize, int rowSize, int rowWidth, int xOffset, int yOffset) {
-        blitZOffset(builder, posX, posY, 0, 0, 7, 7, zOffset);
-        for (int size = rowSize; size > 0; size -= 9) {
-            int s = Math.min(size, 9);
-
-            blitZOffset(builder, posX + xOffset, posY, 7, 0, s * 18, 7, zOffset);
-            xOffset += s * 18;
-        }
-        blitZOffset(builder, posX + rowWidth + 7, posY, 169, 0, 7, 7, zOffset);
-
-        int rowTexYPos = 7;
-        while (invSize > 0) {
-            xOffset = 7;
-            blitZOffset(builder, posX, posY + yOffset, 0, rowTexYPos, 7, 18, zOffset);
-            for (int rSize = rowSize; rSize > 0; rSize -= 9) {
-                int s = Math.min(rSize, 9);
-
-                blitZOffset(builder, posX + xOffset, posY + yOffset, 7, rowTexYPos, s * 18, 18, zOffset);
-                xOffset += s * 18;
-            }
-            blitZOffset(builder, posX + xOffset, posY + yOffset, 169, rowTexYPos, 7, 18, zOffset);
-            yOffset += 18;
-            invSize -= rowSize;
-            rowTexYPos = rowTexYPos >= 43 ? 7 : rowTexYPos + 18;
-        }
-
-        xOffset = 7;
-        blitZOffset(builder, posX, posY + yOffset, 0, 61, 7, 7, zOffset);
-        for (int size = rowSize; size > 0; size -= 9) {
-            int s = Math.min(size, 9);
-
-            blitZOffset(builder, posX + xOffset, posY + yOffset, 7, 61, s * 18, 7, zOffset);
-            xOffset += s * 18;
-        }
-        blitZOffset(builder, posX + rowWidth + 7, posY + yOffset, 169, 61, 7, 7, zOffset);
-    }
-
     private void setTexture(MinecraftClient mc, float[] color) {
-        RenderSystem.color3f(color[0], color[1], color[2]);
-        mc.getTextureManager().bindTexture(DEFAULT_TEXTURE_LIGHT);
-    }
-
-    public void blitZOffset(BufferBuilder builder, int x, int y, int u, int v, int w, int h, double zOffset) {
-        builder.vertex(x, y + h, zOffset).texture(u * 0.00390625f, (v + h) * 0.00390625f).next();
-        builder.vertex(x + w, y + h, zOffset).texture((u + w) * 0.00390625f, (v + h) * 0.00390625f).next();
-        builder.vertex(x + w, y, zOffset).texture((u + w) * 0.00390625f, (v + 0) * 0.00390625f).next();
-        builder.vertex(x, y, zOffset).texture(u * 0.00390625f, v * 0.00390625f).next();
+        RenderSystem.setShaderColor(color[0], color[1], color[2], 1.0f);
+        RenderSystem.setShaderTexture(0, DEFAULT_TEXTURE_LIGHT);
     }
 
     private void requestInventoryData(BlockEntity blockEntity) {
@@ -297,13 +248,13 @@ public class HudOverlayRenderer {
     }
 
     public static class CachedRequestData {
-        private CompoundTag inventoryData;
+        private NbtCompound inventoryData;
         private BlockEntity blockEntity;
         private long timeReceived;
         private ContainerType containerType;
         private int invMaxSize;
 
-        public CachedRequestData(CompoundTag inventoryData, BlockEntity blockEntity, long timeReceived, ContainerType containerType, int invMaxSize) {
+        public CachedRequestData(NbtCompound inventoryData, BlockEntity blockEntity, long timeReceived, ContainerType containerType, int invMaxSize) {
             this.inventoryData = inventoryData;
             this.blockEntity = blockEntity;
             this.timeReceived = timeReceived;
