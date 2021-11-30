@@ -54,9 +54,9 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
             int invMaxSize;
             ContainerType containerType;
 
-            if(block instanceof ChestBlock) {
-                ChestBlock chestBlock = (ChestBlock) block;
+            if(block instanceof ChestBlock chestBlock) {
                 Inventory inventory = ChestBlock.getInventory(chestBlock, blockState, player.world, blockPos, true);
+                if (inventory == null) { return; }
                 invMaxSize = inventory.size();
                 DefaultedList<ItemStack> items = DefaultedList.ofSize(invMaxSize, ItemStack.EMPTY);
                 for(int i = 0; i < invMaxSize; ++i) {
@@ -71,12 +71,11 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
 
                 inventoryTagData = Inventories.writeNbt(inventoryTagData, items);
             }
-            else if(blockEntity instanceof LockableContainerBlockEntity) {
-                LockableContainerBlockEntity lbe = (LockableContainerBlockEntity) blockEntity;
+            else if(blockEntity instanceof LockableContainerBlockEntity lbe) {
                 containerType = ContainerType.from(lbe);
 
                 invMaxSize = lbe.size();
-                inventoryTagData = lbe.writeNbt(inventoryTagData);
+                inventoryTagData = lbe.createNbt();
             } else {
                 return;
             }
