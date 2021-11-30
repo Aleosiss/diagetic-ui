@@ -16,8 +16,8 @@ jobs:
       - name: set up java
         uses: actions/setup-java@v2
         with:
-          distribution: 'adopt'
-          java-version: '16'
+          distribution: 'temurin'
+          java-version: '17'
       - name: Build with Gradle
         run: ./gradlew build -Pmod_version=${GITHUB_SHA::8}
       - name: Upload build artifacts

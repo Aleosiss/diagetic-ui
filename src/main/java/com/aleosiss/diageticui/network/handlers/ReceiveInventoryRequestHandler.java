@@ -15,7 +15,7 @@ import net.minecraft.inventory.DoubleInventory;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayNetworkHandler;
@@ -49,14 +49,14 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
         server.execute(() -> {
             BlockState blockState = player.world.getBlockState(blockPos);
             Block block = blockState.getBlock();
-            CompoundTag inventoryTagData = new CompoundTag();
+            NbtCompound inventoryTagData = new NbtCompound();
             BlockEntity blockEntity = player.world.getBlockEntity(blockPos);
             int invMaxSize;
             ContainerType containerType;
 
-            if(block instanceof ChestBlock) {
-                ChestBlock chestBlock = (ChestBlock) block;
+            if(block instanceof ChestBlock chestBlock) {
                 Inventory inventory = ChestBlock.getInventory(chestBlock, blockState, player.world, blockPos, true);
+                if (inventory == null) { return; }
                 invMaxSize = inventory.size();
                 DefaultedList<ItemStack> items = DefaultedList.ofSize(invMaxSize, ItemStack.EMPTY);
                 for(int i = 0; i < invMaxSize; ++i) {
@@ -69,14 +69,13 @@ public class ReceiveInventoryRequestHandler implements ServerPlayNetworking.Play
                     containerType = ContainerType.SINGLE_CHEST;
                 }
 
-                inventoryTagData = Inventories.toTag(inventoryTagData, items);
+                inventoryTagData = Inventories.writeNbt(inventoryTagData, items);
             }
-            else if(blockEntity instanceof LockableContainerBlockEntity) {
-                LockableContainerBlockEntity lbe = (LockableContainerBlockEntity) blockEntity;
+            else if(blockEntity instanceof LockableContainerBlockEntity lbe) {
                 containerType = ContainerType.from(lbe);
 
                 invMaxSize = lbe.size();
-                inventoryTagData = lbe.toTag(inventoryTagData);
+                inventoryTagData = lbe.createNbt();
             } else {
                 return;
             }
