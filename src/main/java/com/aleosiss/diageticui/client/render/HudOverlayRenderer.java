@@ -55,22 +55,32 @@ public class HudOverlayRenderer {
     private int widthOffset = 20;
     private int heightOffset = 0;
 
+    // does this reduce allocations?
+    private HitResult clientCrosshairRaytrace;
+    private MinecraftClient mc;
+    private ClientWorld world;
+    private BlockHitResult targetBlockResult;
+    private BlockEntity blockEntity;
+    private DefaultedList<ItemStack> inventory;
+    private Screen hudOverlayScreen = new BaseContainerScreen(new TranslatableText("diageticui.container.screen")) {};
+
 
     public HudOverlayRenderer(Identifier rendererId) {
         this.rendererId = rendererId;
     }
 
     public void show(MatrixStack ms, float v) {
-        HitResult clientCrosshairRaytrace = MinecraftClient.getInstance().crosshairTarget;
+        mc = MinecraftClient.getInstance();
+        world = mc.world;
+
+        clientCrosshairRaytrace = mc.crosshairTarget;
         if(clientCrosshairRaytrace == null || !HitResult.Type.BLOCK.equals(clientCrosshairRaytrace.getType())) {
             currentTarget = null;
             cachedRequestData = null;
             return;
         }
 
-        BlockHitResult targetBlockResult = (BlockHitResult) clientCrosshairRaytrace;
-        MinecraftClient mc = MinecraftClient.getInstance();
-        ClientWorld world = mc.world;
+        targetBlockResult = (BlockHitResult) clientCrosshairRaytrace;
 
         // TODO: Move this
         if(mc.currentScreen != null) {
@@ -82,7 +92,7 @@ public class HudOverlayRenderer {
             logger.warn("World was null at show");
             return;
         }
-        BlockEntity blockEntity = world.getBlockEntity(currentTarget);
+        blockEntity = world.getBlockEntity(currentTarget);
         if(blockEntity instanceof LockableContainerBlockEntity) {
             draw(ms, mc, world, (LockableContainerBlockEntity) blockEntity);
         }
@@ -99,14 +109,10 @@ public class HudOverlayRenderer {
             return;
         }
 
-        DefaultedList<ItemStack> inventory = DefaultedList.ofSize(cachedRequestData.invMaxSize, ItemStack.EMPTY);
+        inventory = DefaultedList.ofSize(cachedRequestData.invMaxSize, ItemStack.EMPTY);
         Inventories.readNbt(cachedRequestData.inventoryData, inventory);
-        ContainerType containerType = cachedRequestData.containerType;
 
         ms.push();
-        Screen hudOverlayScreen = new BaseContainerScreen(new TranslatableText("diageticui.container.screen")) {};
-
-
         hudOverlayScreen.init(mc,
                 mc.getWindow().getScaledWidth(),
                 mc.getWindow().getScaledHeight());
@@ -115,14 +121,14 @@ public class HudOverlayRenderer {
         int posY = hudOverlayScreen.height / 2 + getOverlayHeightOffset();
         int posZ = hudOverlayScreen.getZOffset();
 
-        int invItemsPerRow = containerType.getInvItemsPerRow();
-        if(ContainerType.OTHER.equals(containerType)) {
+        int invItemsPerRow = cachedRequestData.containerType.getInvItemsPerRow();
+        if(ContainerType.OTHER.equals(cachedRequestData.containerType)) {
             invItemsPerRow = getInvItemsPerRow(blockEntity);
         }
 
 
-        drawInventoryBackgroundImage(mc, containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
-        drawInventoryItems(mc, containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        drawInventoryBackgroundImage(mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        drawInventoryItems(mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
 
         ms.pop();
     }
@@ -148,14 +154,14 @@ public class HudOverlayRenderer {
     }
 
     private boolean validateCache(BlockEntity currentBlock) {
-        if(cachedRequestData == null) {
+        if(cachedRequestData == null || cachedRequestData.blockEntity == null) {
             return false;
         }
 
         // handle double chests
         if (isPartOfCachedDoubleChest(currentBlock)) return true;
 
-        return cachedRequestData.blockEntity.getPos().equals(currentTarget);
+        return currentTarget.equals(cachedRequestData.blockEntity.getPos());
     }
 
     private boolean isPartOfCachedDoubleChest(BlockEntity currentBlock) {
@@ -232,7 +238,7 @@ public class HudOverlayRenderer {
         long now = System.currentTimeMillis();
 
         boolean sameBlock = false;
-        if(cachedRequestData != null) {
+        if(cachedRequestData != null && cachedRequestData.blockEntity != null) {
             sameBlock = blockEntity.getPos().equals(cachedRequestData.blockEntity.getPos());
         }
 
