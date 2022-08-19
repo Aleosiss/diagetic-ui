@@ -1,19 +1,14 @@
 package com.aleosiss.diageticui.network;
 
-import com.aleosiss.diageticui.data.ContainerType;
 import com.aleosiss.diageticui.network.handlers.MakeInventoryRequestHandler;
 import com.aleosiss.diageticui.network.handlers.ReceiveInventoryRequestHandler;
-import com.aleosiss.diageticui.network.packets.PacketGetInventory;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.BlockPos;
 
 public class NetworkService {
     private static NetworkService SINGLETON;
