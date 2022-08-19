@@ -16,7 +16,6 @@ import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
@@ -24,7 +23,7 @@ import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.text.TranslatableText;
+import net.minecraft.text.Text;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
@@ -62,7 +61,7 @@ public class HudOverlayRenderer {
     private BlockHitResult targetBlockResult;
     private BlockEntity blockEntity;
     private DefaultedList<ItemStack> inventory;
-    private Screen hudOverlayScreen = new BaseContainerScreen(new TranslatableText("diageticui.container.screen")) {};
+    private final Screen hudOverlayScreen = new BaseContainerScreen(Text.translatable("diageticui.container.screen")) {};
 
 
     public HudOverlayRenderer(Identifier rendererId) {

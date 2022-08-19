@@ -1,7 +1,6 @@
 package com.aleosiss.diageticui.client.render.util;
 
 import net.minecraft.client.gui.DrawableHelper;
-import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.util.math.MatrixStack;
 
 public class DrawHelpers {

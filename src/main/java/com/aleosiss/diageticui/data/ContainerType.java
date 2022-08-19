@@ -1,6 +1,14 @@
 package com.aleosiss.diageticui.data;
 
-import net.minecraft.block.entity.*;
+import net.minecraft.block.entity.BarrelBlockEntity;
+import net.minecraft.block.entity.BrewingStandBlockEntity;
+import net.minecraft.block.entity.ChestBlockEntity;
+import net.minecraft.block.entity.DispenserBlockEntity;
+import net.minecraft.block.entity.DropperBlockEntity;
+import net.minecraft.block.entity.FurnaceBlockEntity;
+import net.minecraft.block.entity.HopperBlockEntity;
+import net.minecraft.block.entity.LockableContainerBlockEntity;
+import net.minecraft.block.entity.ShulkerBoxBlockEntity;
 
 public enum ContainerType {
     SHULKER_BOX(ShulkerBoxBlockEntity.class, 27, 9),
