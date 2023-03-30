@@ -15,6 +15,7 @@ import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -118,7 +119,7 @@ public class HudOverlayRenderer {
 
         int posX = hudOverlayScreen.width / 2 + getOverlayWidthOffset();
         int posY = hudOverlayScreen.height / 2 + getOverlayHeightOffset();
-        int posZ = hudOverlayScreen.getZOffset();
+        int posZ = hudOverlayScreen.getNavigationOrder();
 
         int invItemsPerRow = cachedRequestData.containerType.getInvItemsPerRow();
         if(ContainerType.OTHER.equals(cachedRequestData.containerType)) {
@@ -126,8 +127,8 @@ public class HudOverlayRenderer {
         }
 
 
-        drawInventoryBackgroundImage(mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
-        drawInventoryItems(mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        drawInventoryBackgroundImage(ms, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        drawInventoryItems(ms, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY);
 
         ms.pop();
     }
@@ -168,13 +169,13 @@ public class HudOverlayRenderer {
             ChestType chestType1 = currentBlock.getCachedState().get(ChestBlock.CHEST_TYPE);
             ChestType chestType2 = cachedRequestData.blockEntity.getCachedState().get(ChestBlock.CHEST_TYPE);
 
-            // not a perfect check but it works in my naive test cases
+            // not a perfect check, but it works in my naive test cases
             return !ChestType.SINGLE.equals(chestType1) && chestType1.getOpposite().equals(chestType2);
         }
         return false;
     }
 
-    private static void drawInventoryItems(MinecraftClient mc, ContainerType type, int invItemsPerRow, DefaultedList<ItemStack> inventory, LockableContainerBlockEntity blockEntity, int posX, int posY, int zOff) {
+    private static void drawInventoryItems(MatrixStack ms, MinecraftClient mc, ContainerType type, int invItemsPerRow, DefaultedList<ItemStack> inventory, LockableContainerBlockEntity blockEntity, int posX, int posY) {
         ItemRenderer itemRenderer = mc.getItemRenderer();
         TextRenderer textRenderer = mc.textRenderer;
 
@@ -183,12 +184,12 @@ public class HudOverlayRenderer {
             int xOffset = 8 + posX + 18 * (i % invItemsPerRow);
             int yOffset = 8 + posY + 18 * (i / invItemsPerRow);
 
-            itemRenderer.renderInGuiWithOverrides(stack, xOffset, yOffset);
-            itemRenderer.renderGuiItemOverlay(textRenderer, stack, xOffset, yOffset);
+            itemRenderer.renderInGuiWithOverrides(ms, stack, xOffset, yOffset);
+            itemRenderer.renderGuiItemOverlay(ms, textRenderer, stack, xOffset, yOffset);
         }
     }
 
-    private void drawInventoryBackgroundImage(MinecraftClient mc, ContainerType type,
+    private void drawInventoryBackgroundImage(MatrixStack ms, MinecraftClient mc, ContainerType type,
                                               int invItemsPerRow, DefaultedList<ItemStack> inventory,
                                               LockableContainerBlockEntity blockEntity,
                                               int x, int y, int z)
@@ -197,8 +198,7 @@ public class HudOverlayRenderer {
         int invSize = inventory.size();
         int xOffset = 7;
         int yOffset = 7;
-        int rowSize = invItemsPerRow;
-        int rowWidth = rowSize * 18;
+        int rowWidth = invItemsPerRow * 18;
 
         float[] color = DEFAULT_COLOR;
         if(ContainerType.SHULKER_BOX.equals(type)) {
@@ -207,7 +207,7 @@ public class HudOverlayRenderer {
 
         setTexture(mc, color);
 
-        DrawHelpers.manipulateTexture(new MatrixStack(), x, y, zOffset, invSize, rowSize, rowWidth, xOffset, yOffset);
+        DrawHelpers.manipulateTexture(ms, x, y, zOffset, invSize, invItemsPerRow, rowWidth, xOffset, yOffset);
 
     }
 
