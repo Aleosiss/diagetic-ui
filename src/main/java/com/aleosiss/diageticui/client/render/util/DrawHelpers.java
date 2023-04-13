@@ -1,5 +1,6 @@
 package com.aleosiss.diageticui.client.render.util;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.util.math.MatrixStack;
 
@@ -56,5 +57,7 @@ public class DrawHelpers {
                 256);
         // bottom-left corner
         DrawableHelper.drawTexture(matrices, x, y + yOffset, zOffset, 0, 61, 7, 7, 256, 256);
+
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
     }
 }

@@ -1,5 +1,7 @@
 package com.aleosiss.diageticui.client.render;
 
+import static net.minecraft.block.ShulkerBoxBlock.getColor;
+
 import com.aleosiss.diageticui.client.render.util.DrawHelpers;
 import com.aleosiss.diageticui.data.ContainerType;
 import com.aleosiss.diageticui.network.NetworkConstants;
@@ -15,7 +17,6 @@ import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -33,8 +34,6 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import static net.minecraft.block.ShulkerBoxBlock.getColor;
 
 
 @Environment(EnvType.CLIENT)
@@ -194,7 +193,7 @@ public class HudOverlayRenderer {
                                               LockableContainerBlockEntity blockEntity,
                                               int x, int y, int z)
     {
-        final int zOffset = z + 100;
+        final int zOffset = z - 100;
         int invSize = inventory.size();
         int xOffset = 7;
         int yOffset = 7;
