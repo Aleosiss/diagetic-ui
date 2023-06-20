@@ -1,12 +1,9 @@
 package com.aleosiss.diageticui.client.render;
 
-import static net.minecraft.block.ShulkerBoxBlock.getColor;
-
 import com.aleosiss.diageticui.client.render.util.DrawHelpers;
 import com.aleosiss.diageticui.data.ContainerType;
 import com.aleosiss.diageticui.network.NetworkConstants;
 import com.aleosiss.diageticui.network.NetworkService;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -17,9 +14,8 @@ import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
@@ -34,6 +30,8 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import static net.minecraft.block.ShulkerBoxBlock.getColor;
 
 
 @Environment(EnvType.CLIENT)
@@ -68,7 +66,7 @@ public class HudOverlayRenderer {
         this.rendererId = rendererId;
     }
 
-    public void show(MatrixStack ms, float v) {
+    public void show(DrawContext draw, float v) {
         mc = MinecraftClient.getInstance();
         world = mc.world;
 
@@ -93,7 +91,7 @@ public class HudOverlayRenderer {
         }
         blockEntity = world.getBlockEntity(currentTarget);
         if(blockEntity instanceof LockableContainerBlockEntity) {
-            draw(ms, mc, world, (LockableContainerBlockEntity) blockEntity);
+            draw(draw, mc, world, (LockableContainerBlockEntity) blockEntity);
         }
     }
 
@@ -101,7 +99,7 @@ public class HudOverlayRenderer {
         this.cachedRequestData = cachedRequestData;
     }
 
-    private void draw(MatrixStack ms, MinecraftClient mc, ClientWorld world, LockableContainerBlockEntity blockEntity) {
+    private void draw(DrawContext draw, MinecraftClient mc, ClientWorld world, LockableContainerBlockEntity blockEntity) {
         requestInventoryData(blockEntity);
         if(!validateCache(blockEntity)) {
             cachedRequestData = null;
@@ -111,7 +109,7 @@ public class HudOverlayRenderer {
         inventory = DefaultedList.ofSize(cachedRequestData.invMaxSize, ItemStack.EMPTY);
         Inventories.readNbt(cachedRequestData.inventoryData, inventory);
 
-        ms.push();
+        draw.getMatrices().push();
         hudOverlayScreen.init(mc,
                 mc.getWindow().getScaledWidth(),
                 mc.getWindow().getScaledHeight());
@@ -126,10 +124,10 @@ public class HudOverlayRenderer {
         }
 
 
-        drawInventoryBackgroundImage(ms, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
-        drawInventoryItems(ms, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY);
+        this.drawInventoryBackgroundImage(draw, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY, posZ);
+        this.drawInventoryItems(draw, mc, cachedRequestData.containerType, invItemsPerRow, inventory, blockEntity, posX, posY);
 
-        ms.pop();
+        draw.getMatrices().pop();
     }
 
     private int getOverlayHeightOffset() {
@@ -174,8 +172,7 @@ public class HudOverlayRenderer {
         return false;
     }
 
-    private static void drawInventoryItems(MatrixStack ms, MinecraftClient mc, ContainerType type, int invItemsPerRow, DefaultedList<ItemStack> inventory, LockableContainerBlockEntity blockEntity, int posX, int posY) {
-        ItemRenderer itemRenderer = mc.getItemRenderer();
+    private void drawInventoryItems(DrawContext draw, MinecraftClient mc, ContainerType type, int invItemsPerRow, DefaultedList<ItemStack> inventory, LockableContainerBlockEntity blockEntity, int posX, int posY) {
         TextRenderer textRenderer = mc.textRenderer;
 
         for (int i = 0, size = inventory.size(); i < size; ++i) {
@@ -183,12 +180,12 @@ public class HudOverlayRenderer {
             int xOffset = 8 + posX + 18 * (i % invItemsPerRow);
             int yOffset = 8 + posY + 18 * (i / invItemsPerRow);
 
-            itemRenderer.renderInGuiWithOverrides(ms, stack, xOffset, yOffset);
-            itemRenderer.renderGuiItemOverlay(ms, textRenderer, stack, xOffset, yOffset);
+            draw.drawItem(stack, xOffset, yOffset);
+            draw.drawItemInSlot(textRenderer, stack, xOffset, yOffset);
         }
     }
 
-    private void drawInventoryBackgroundImage(MatrixStack ms, MinecraftClient mc, ContainerType type,
+    private void drawInventoryBackgroundImage(DrawContext draw, MinecraftClient mc, ContainerType type,
                                               int invItemsPerRow, DefaultedList<ItemStack> inventory,
                                               LockableContainerBlockEntity blockEntity,
                                               int x, int y, int z)
@@ -203,11 +200,7 @@ public class HudOverlayRenderer {
         if(ContainerType.SHULKER_BOX.equals(type)) {
             color = getShulkerBoxColor(blockEntity);
         }
-
-        setTexture(mc, color);
-
-        DrawHelpers.manipulateTexture(ms, x, y, zOffset, invSize, invItemsPerRow, rowWidth, xOffset, yOffset);
-
+        DrawHelpers.manipulateTexture(draw, DEFAULT_TEXTURE_LIGHT, color, x, y, zOffset, invSize, invItemsPerRow, rowWidth, xOffset, yOffset);
     }
 
     private float[] getShulkerBoxColor(LockableContainerBlockEntity blockEntity) {
@@ -225,11 +218,6 @@ public class HudOverlayRenderer {
             color = SHULKER_BOX_COLOR;
         }
         return color;
-    }
-
-    private void setTexture(MinecraftClient mc, float[] color) {
-        RenderSystem.setShaderColor(color[0], color[1], color[2], 1.0f);
-        RenderSystem.setShaderTexture(0, DEFAULT_TEXTURE_LIGHT);
     }
 
     private void requestInventoryData(BlockEntity blockEntity) {
