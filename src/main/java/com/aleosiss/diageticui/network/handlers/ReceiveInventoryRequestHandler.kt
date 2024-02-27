@@ -18,6 +18,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.collection.DefaultedList
 import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.hit.HitResult
+import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.LogManager
 
 class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayChannelHandler {
@@ -40,40 +41,49 @@ class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayChannelHandler {
         }
 
         // okay we're definitely looking at a block
-        server.execute {
-            val blockState = player.world.getBlockState(blockPos)
-            val block = blockState.block
-            var inventoryTagData: NbtCompound? = NbtCompound()
-            val blockEntity = player.world.getBlockEntity(blockPos)
-            val invMaxSize: Int
-            val containerType: ContainerType
+        server.execute { receive(player, blockPos, responseSender) }
+    }
 
-            when {
-                block is ChestBlock -> {
-                    val inventory = ChestBlock.getInventory(block, blockState, player.world, blockPos, true)
-                        ?: return@execute
-                    invMaxSize = inventory.size()
-                    val items = DefaultedList.ofSize(invMaxSize, ItemStack.EMPTY)
-                    for (i in 0 until invMaxSize) {
-                        items[i] = inventory.getStack(i)
-                    }
-                    containerType = (if (inventory is DoubleInventory) ContainerType.DOUBLE_CHEST else ContainerType.SINGLE_CHEST)
-                    inventoryTagData = Inventories.writeNbt(inventoryTagData, items)
+    private fun receive(
+        player: ServerPlayerEntity,
+        blockPos: BlockPos?,
+        responseSender: PacketSender
+    ) {
+        val blockState = player.world.getBlockState(blockPos)
+        val block = blockState.block
+        var inventoryTagData: NbtCompound? = NbtCompound()
+        val blockEntity = player.world.getBlockEntity(blockPos)
+        val invMaxSize: Int
+        val containerType: ContainerType
+
+        when {
+            block is ChestBlock -> {
+                val inventory = ChestBlock.getInventory(block, blockState, player.world, blockPos, true)
+                    ?: return
+                invMaxSize = inventory.size()
+                val items = DefaultedList.ofSize(invMaxSize, ItemStack.EMPTY)
+                for (i in 0 until invMaxSize) {
+                    items[i] = inventory.getStack(i)
                 }
-                blockEntity is LockableContainerBlockEntity -> {
-                    containerType = ContainerType.from(blockEntity)
-                    invMaxSize = blockEntity.size()
-                    inventoryTagData = blockEntity.createNbt()
-                }
-                else -> {
-                    return@execute
-                }
+                containerType =
+                    (if (inventory is DoubleInventory) ContainerType.DOUBLE_CHEST else ContainerType.SINGLE_CHEST)
+                inventoryTagData = Inventories.writeNbt(inventoryTagData, items)
             }
-            responseSender.sendPacket(
-                NetworkConstants.DIAGETIC_INVENTORY_RESPONSE_PACKET,
-                toPacketBuffer(inventoryTagData, blockEntity!!.pos, containerType, invMaxSize)
-            )
+
+            blockEntity is LockableContainerBlockEntity -> {
+                containerType = ContainerType.from(blockEntity)
+                invMaxSize = blockEntity.size()
+                inventoryTagData = blockEntity.createNbt()
+            }
+
+            else -> {
+                return
+            }
         }
+        responseSender.sendPacket(
+            NetworkConstants.DIAGETIC_INVENTORY_RESPONSE_PACKET,
+            toPacketBuffer(inventoryTagData, blockEntity!!.pos, containerType, invMaxSize)
+        )
     }
 
     companion object {
