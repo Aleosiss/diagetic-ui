@@ -17,7 +17,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
       - name: Build with Gradle
         run: ./gradlew build -Pmod_version=${GITHUB_SHA::8}
       - name: Upload build artifacts
