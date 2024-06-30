@@ -21,11 +21,13 @@ import net.minecraft.inventory.Inventories
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.text.Text
+import net.minecraft.util.DyeColor
 import net.minecraft.util.Identifier
 import net.minecraft.util.collection.DefaultedList
 import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec3d
 import org.apache.logging.log4j.LogManager
 
 @Environment(EnvType.CLIENT)
@@ -91,7 +93,7 @@ class HudOverlayRenderer(private val rendererId: Identifier) {
             return
         }
         inventory = DefaultedList.ofSize(cachedRequestData!!.invMaxSize, ItemStack.EMPTY)
-        Inventories.readNbt(cachedRequestData!!.inventoryData, inventory)
+        Inventories.readNbt(cachedRequestData!!.inventoryData, inventory, mc.world!!.registryManager)
         draw.matrices.push()
         hudOverlayScreen.init(
             mc,
@@ -210,18 +212,18 @@ class HudOverlayRenderer(private val rendererId: Identifier) {
     }
 
     private fun getShulkerBoxColor(blockEntity: LockableContainerBlockEntity): FloatArray {
-        val SHULKER_BOX_COLOR = floatArrayOf(0.592f, 0.403f, 0.592f)
+        val shulkerBoxColor = floatArrayOf(0.592f, 0.403f, 0.592f)
         val color: FloatArray
-        val dyeColor = ShulkerBoxBlock.getColor(blockEntity.cachedState.block)
+        val dyeColor: DyeColor? = ShulkerBoxBlock.getColor(blockEntity.cachedState.block)
         color = if (dyeColor != null) {
-            val components = dyeColor.colorComponents
+            val components = Vec3d.unpackRgb(dyeColor.entityColor)
             floatArrayOf(
-                0.15f.coerceAtLeast(components[0]),
-                0.15f.coerceAtLeast(components[1]),
-                0.15f.coerceAtLeast(components[2])
+                0.15f.coerceAtLeast(components.x.toFloat()), // r
+                0.15f.coerceAtLeast(components.y.toFloat()), // g
+                0.15f.coerceAtLeast(components.z.toFloat())  // b
             )
         } else {
-            SHULKER_BOX_COLOR
+            shulkerBoxColor
         }
         return color
     }
@@ -233,8 +235,7 @@ class HudOverlayRenderer(private val rendererId: Identifier) {
             sameBlock = blockEntity.pos == cachedRequestData!!.blockEntity!!.pos
         }
         if (!sameBlock || now > cachedRequestData!!.timeReceived + packetPollerTimeMs) {
-            val request = networkService.buildInventoryRequestPacket(blockEntity)
-            ClientPlayNetworking.send(NetworkConstants.DIAGETIC_INVENTORY_REQUEST_PACKET, request)
+            ClientPlayNetworking.send(NetworkConstants.InventoryRequestPayload(blockEntity.pos))
         }
     }
 
@@ -247,7 +248,7 @@ class HudOverlayRenderer(private val rendererId: Identifier) {
     )
 
     companion object {
-        private val DEFAULT_TEXTURE_LIGHT = Identifier("diageticui", "textures/gui/shulker_box_tooltip.png")
+        private val DEFAULT_TEXTURE_LIGHT = Identifier.of("diageticui", "textures/gui/shulker_box_tooltip.png")
         var DEFAULT_COLOR = floatArrayOf(1f, 1f, 1f)
     }
 }

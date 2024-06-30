@@ -3,6 +3,7 @@ package com.aleosiss.diageticui.network.handlers
 import com.aleosiss.diageticui.data.ContainerType
 import com.aleosiss.diageticui.network.NetworkConstants
 import com.aleosiss.diageticui.network.packets.PacketGetInventory.Companion.toPacketBuffer
+import com.aleosiss.diageticui.toBlockPos
 import net.fabricmc.fabric.api.networking.v1.PacketSender
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.ChestBlock
@@ -21,17 +22,11 @@ import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
 import org.apache.logging.log4j.LogManager
 
-class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayChannelHandler {
-    override fun receive(
-        server: MinecraftServer,
-        player: ServerPlayerEntity,
-        handler: ServerPlayNetworkHandler,
-        buf: PacketByteBuf,
-        responseSender: PacketSender
-    ) {
+class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayPayloadHandler<NetworkConstants.InventoryRequestPayload> {
+    override fun receive(payload: NetworkConstants.InventoryRequestPayload, context: ServerPlayNetworking.Context) {
         // read in the block the player says they're looking at and validate
-        val blockPos = buf.readBlockPos()
-        val clientCrosshairRaytrace = player.raycast(5.0, 1f, false)
+        val blockPos = payload.blockPosLong.toBlockPos()
+        val clientCrosshairRaytrace = context.player().raycast(5.0, 1f, false)
         if (clientCrosshairRaytrace == null || HitResult.Type.BLOCK != clientCrosshairRaytrace.type) {
             return
         }
@@ -41,7 +36,7 @@ class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayChannelHandler {
         }
 
         // okay we're definitely looking at a block
-        server.execute { receive(player, blockPos, responseSender) }
+        context.server().execute { receive(context.player(), blockPos, context.responseSender()) }
     }
 
     private fun receive(
@@ -67,27 +62,22 @@ class ReceiveInventoryRequestHandler : ServerPlayNetworking.PlayChannelHandler {
                 }
                 containerType =
                     (if (inventory is DoubleInventory) ContainerType.DOUBLE_CHEST else ContainerType.SINGLE_CHEST)
-                inventoryTagData = Inventories.writeNbt(inventoryTagData, items)
+                inventoryTagData = Inventories.writeNbt(inventoryTagData, items, player.world.registryManager)
             }
-
             blockEntity is LockableContainerBlockEntity -> {
                 containerType = ContainerType.from(blockEntity)
                 invMaxSize = blockEntity.size()
-                inventoryTagData = blockEntity.createNbt()
+                inventoryTagData = blockEntity.createNbt(player.world.registryManager)
             }
-
-            else -> {
-                return
-            }
+            else -> return
         }
-        responseSender.sendPacket(
-            NetworkConstants.DIAGETIC_INVENTORY_RESPONSE_PACKET,
-            toPacketBuffer(inventoryTagData, blockEntity!!.pos, containerType, invMaxSize)
-        )
+        blockPos?.let {
+            responseSender.sendPacket(NetworkConstants.InventoryResponsePayload(inventoryTagData, it, containerType, invMaxSize))
+        }
     }
 
     companion object {
         private val logger = LogManager.getLogger()
-        val SERVER_RECEIVE_INVENTORY_REQUEST: ServerPlayNetworking.PlayChannelHandler = ReceiveInventoryRequestHandler()
+        val SERVER_RECEIVE_INVENTORY_REQUEST: ServerPlayNetworking.PlayPayloadHandler<NetworkConstants.InventoryRequestPayload> = ReceiveInventoryRequestHandler()
     }
 }

@@ -13,14 +13,14 @@ class DiageticUIClient : ClientModInitializer {
     override fun onInitializeClient() {
         LOGGER.info("Client init")
         NetworkService.instance.initializeClient()
-        HudRenderCallback.EVENT.register(HudRenderCallback { draw: DrawContext?, _: Float ->
+        HudRenderCallback.EVENT.register(HudRenderCallback { draw: DrawContext?, _ ->
             draw?.let { HUD_OVERLAY_RENDERER.show(it) }
         })
     }
 
     companion object {
         private val LOGGER = LogManager.getLogger()
-        private val HUD_OVERLAY_RENDERER_ID = Identifier(DiageticUI.MOD_ID, "hud_overlay_renderer")
+        private val HUD_OVERLAY_RENDERER_ID = Identifier.of(DiageticUI.MOD_ID, "hud_overlay_renderer")
         val HUD_OVERLAY_RENDERER = HudOverlayRenderer(HUD_OVERLAY_RENDERER_ID)
     }
 }
