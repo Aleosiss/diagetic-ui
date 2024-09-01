@@ -16,6 +16,7 @@ enum class ContainerType(
     DISPENSER(DispenserBlockEntity::class.java, 9, 3),
     FURNACE(FurnaceBlockEntity::class.java, 3, 3),
     BREWING_STAND(BrewingStandBlockEntity::class.java, 5, 5),
+    CRAFTER(CrafterBlockEntity::class.java, 9, 3),
     OTHER(LockableContainerBlockEntity::class.java, 1, 1);
 
     companion object {
